@@ -11,7 +11,10 @@ import android.util.Log;
 import com.godot.game.R;
 
 import android.media.RingtoneManager;
+import android.app.NotificationManager;
 import android.support.v4.app.NotificationCompat;
+import android.app.NotificationChannel;
+import android.os.Build;
 import android.graphics.BitmapFactory;
 import android.os.SystemClock;
 
@@ -20,6 +23,8 @@ public class GodotLocalNotification extends Godot.SingletonBase {
 	private static Activity activity;
 	private static Context context;
 	private static int instance_id;
+	private static String CHANNEL_ID = "LOCAL";
+	private static String CHANNEL_NAME = "Channel local notification";
 
 	static public Godot.SingletonBase initialize(Activity p_activity) { 
 		return new GodotLocalNotification(p_activity); 
@@ -38,11 +43,22 @@ public class GodotLocalNotification extends Godot.SingletonBase {
 
 	public void init(final int p_instance_id) {
 		this.instance_id = p_instance_id;
+
+		// Create the NotificationChannel, but only on API 26+ because
+		// the NotificationChannel class is new and not in the support library
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			NotificationChannel channel = new NotificationChannel(activity.getPackageName() + CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT);
+
+			// Register the channel with the system; you can't change the importance
+			// or other notification behaviors after this
+			NotificationManager notificationManager = (NotificationManager)context.getSystemService(NotificationManager.class);
+			notificationManager.createNotificationChannel(channel);
+		}
 	}
 
 	public void schedule_local_notification(String title, String content, int delay, int notification_id) {
 		// delay is after how much time(in millis) from current time you want to schedule the notification
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(context, activity.getPackageName() + CHANNEL_ID)
 			.setContentTitle(title)
 			.setContentText(content)
 			.setAutoCancel(true)
